@@ -1,0 +1,131 @@
+version: '3'
+
+services:
+  app: &app #run full app in one instance
+    container_name: app
+    image: dados_cnpj:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - app-output-files:/opt/data/download
+      - app-extracted-files:/opt/data/final-files
+    command: python -u -m app.app
+    environment:
+      - NODE_ENV=production
+      - OUTPUT_FILES_PATH=/opt/data/download
+      - EXTRACTED_FILES_PATH=/opt/data/final-files
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=postgres
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+      - database_admin
+  
+  app_getfiles:
+    <<: *app #run app to download and extract files
+    container_name: app_getfiles
+    command: python -u -m app.get_files
+  
+  app_empresa:
+    <<: *app #run app to import empresa data from extracted files
+    container_name: app_empresa
+    command: python -u -m app.empresa
+
+  app_estabelecimentos:
+    <<: *app #run app to import estabelecimentos data from extracted files
+    container_name: app_estabelecimentos
+    command: python -u -m app.estabelecimentos
+
+  app_socios:
+    <<: *app #run app to import socios data from extracted files
+    container_name: app_socios
+    command: python -u -m app.socios
+
+  app_simples:
+    <<: *app #run app to import simples data from extracted files
+    container_name: app_simples
+    command: python -u -m app.simples
+  
+  app_cnae:
+    <<: *app #run app to import cnae data from extracted files
+    container_name: app_cnae
+    command: python -u -m app.cnae
+
+  app_moti:
+    <<: *app #run app to import moti data from extracted files
+    container_name: app_moti
+    command: python -u -m app.moti
+  
+  app_munic:
+    <<: *app #run app to import munic data from extracted files
+    container_name: app_munic
+    command: python -u -m app.munic
+  
+  app_natju:
+    <<: *app #run app to import natju data from extracted files
+    container_name: app_natju
+    command: python -u -m app.natju
+
+  app_pais:
+    <<: *app #run app to import pais data from extracted files
+    container_name: app_pais
+    command: python -u -m app.pais
+
+  app_quals:
+    <<: *app #run app to import quals data from extracted files
+    container_name: app_quals
+    command: python -u -m app.quals
+
+  postgrest:
+    container_name: postgrest
+    image: postgrest/postgrest
+    ports:
+      - 3000:3000
+    environment:
+      - PGRST_DB_URI=postgres://postgres:postgres@postgres:5432/postgres
+      - PGRST_DB_ANON_ROLE=postgres
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+  
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+  
+  database_admin:
+    container_name: database-admin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - 5050:80
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  app-output-files:
+  app-extracted-files:
