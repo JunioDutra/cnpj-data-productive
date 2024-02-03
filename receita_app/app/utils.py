@@ -16,8 +16,7 @@ def create_connection():
     cur = conn.cursor()
     return engine, conn, cur
 
-def to_sql(dataframe, **kwargs):
-    size = 4096
+def to_sql(dataframe, size=10000, **kwargs):
     total = len(dataframe)
     name = kwargs.get('name')
 
@@ -25,7 +24,7 @@ def to_sql(dataframe, **kwargs):
         return (df[i:i + size] for i in range(0, len(df), size))
 
     for i, df in enumerate(chunker(dataframe)):
-        df.to_sql(**kwargs)
+        df.to_sql(chunksize=size, **kwargs)
         index = i * size
         percent = (index * 100) / total
         progress = f'{name} {percent:.2f}% {index:0{len(str(total))}}/{total}'

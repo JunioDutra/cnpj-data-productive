@@ -4,8 +4,11 @@ import time
 import pandas as pd
 
 from app.utils import to_sql, create_connection, filter_files, create_index, close_connection, initialize
+from app.get_files import get_file_by_prefix
 
 def run():
+    get_file_by_prefix('SIMPLES')
+    
     path_extracted_files = os.getenv('EXTRACTED_FILES_PATH')
     filtered_files_simples = filter_files('SIMPLES')
     engine, conn, cur = create_connection()
@@ -27,7 +30,7 @@ def run():
         simples_lenght = sum(1 for line in open(extracted_file_path, "r"))
         print('Linhas no arquivo do Simples '+ filtered_files_simples[e] +': '+str(simples_lenght))
 
-        tamanho_das_partes = 1000000
+        tamanho_das_partes = 100000
         partes = round(simples_lenght / tamanho_das_partes)
         nrows = tamanho_das_partes
         skiprows = 0
@@ -60,7 +63,7 @@ def run():
 
             skiprows = skiprows+nrows
 
-            to_sql(simples, name='simples', con=engine, if_exists='append', index=False)
+            to_sql(simples, size=tamanho_das_partes, name='simples', con=engine, if_exists='append', index=False)
             print('Arquivo ' + filtered_files_simples[e] + ' inserido com sucesso no banco de dados! - Parte '+ str(i+1))
 
             try:

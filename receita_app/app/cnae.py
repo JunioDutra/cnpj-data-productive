@@ -4,8 +4,11 @@ import time
 import pandas as pd
 
 from app.utils import to_sql, create_connection, filter_files, close_connection, initialize
+from app.get_files import get_file_by_prefix
 
 def run():
+    get_file_by_prefix('CNAE')
+    
     path_extracted_files = os.getenv('EXTRACTED_FILES_PATH')
     filtered_files_cnae = filter_files('CNAE')
     engine, conn, cur = create_connection()

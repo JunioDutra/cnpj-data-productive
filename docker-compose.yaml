@@ -1,12 +1,13 @@
-version: '3'
-
 services:
-  app: &app #run full app in one instance
+  app: &app
     container_name: app
     image: dados_cnpj:latest
     build:
-      context: .
+      context: ./receita_app
       dockerfile: Dockerfile
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
     volumes:
       - app-output-files:/opt/data/download
       - app-extracted-files:/opt/data/final-files
@@ -22,70 +23,87 @@ services:
       - DB_NAME=postgres
     networks:
       - app-network
-    depends_on:
-      - postgres
-      - database_admin
-  
+    profiles:
+      - full
+
   app_getfiles:
     <<: *app #run app to download and extract files
     container_name: app_getfiles
     command: python -u -m app.get_files
-  
+
   app_empresa:
     <<: *app #run app to import empresa data from extracted files
     container_name: app_empresa
     command: python -u -m app.empresa
+    profiles:
+      - import-heavy
 
   app_estabelecimentos:
     <<: *app #run app to import estabelecimentos data from extracted files
     container_name: app_estabelecimentos
     command: python -u -m app.estabelecimentos
+    profiles:
+      - import-heavy
 
   app_socios:
     <<: *app #run app to import socios data from extracted files
     container_name: app_socios
     command: python -u -m app.socios
+    profiles:
+      - import-heavy
 
   app_simples:
     <<: *app #run app to import simples data from extracted files
     container_name: app_simples
     command: python -u -m app.simples
-  
+    profiles:
+      - import-heavy
+
   app_cnae:
     <<: *app #run app to import cnae data from extracted files
     container_name: app_cnae
     command: python -u -m app.cnae
+    profiles:
+      - import-light
 
   app_moti:
     <<: *app #run app to import moti data from extracted files
     container_name: app_moti
     command: python -u -m app.moti
-  
+    profiles:
+      - import-light
+
   app_munic:
     <<: *app #run app to import munic data from extracted files
     container_name: app_munic
     command: python -u -m app.munic
-  
+    profiles:
+      - import-light
+
   app_natju:
     <<: *app #run app to import natju data from extracted files
     container_name: app_natju
     command: python -u -m app.natju
+    profiles:
+      - import-light
 
   app_pais:
     <<: *app #run app to import pais data from extracted files
     container_name: app_pais
     command: python -u -m app.pais
+    profiles:
+      - import-light
 
   app_quals:
     <<: *app #run app to import quals data from extracted files
     container_name: app_quals
     command: python -u -m app.quals
+    profiles:
+      - import-light
 
   postgrest:
     container_name: postgrest
     image: postgrest/postgrest
-    ports:
-      - 3000:3000
     environment:
       - PGRST_DB_URI=postgres://postgres:postgres@postgres:5432/postgres
       - PGRST_DB_ANON_ROLE=postgres
@@ -93,7 +111,10 @@ services:
       - app-network
     depends_on:
       - postgres
-  
+    profiles:
+      - basic
+      - full
+
   postgres:
     image: postgres:latest
     container_name: postgres
@@ -101,13 +122,14 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
-    ports:
-      - 5432:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
     networks:
       - app-network
-  
+    profiles:
+      - basic
+      - full
+
   database_admin:
     container_name: database-admin
     image: dpage/pgadmin4
@@ -120,6 +142,64 @@ services:
       - 5050:80
     networks:
       - app-network
+    profiles:
+      - basic
+      - full
+
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:23.0.3
+    command: start-dev
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    ports:
+      - 8000:8080
+    networks:
+      - app-network
+    profiles:
+      - basic
+      - full
+
+  api_proxy:
+    container_name: api_proxy
+    image: api_proxy:latest
+    build:
+      context: ./api_proxy
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=production
+      - ISSUER=http://keycloak:8080/realms/apps
+      - AUDIENCE=app
+      - JWK_URI=http://keycloak:8080/realms/apps/protocol/openid-connect/certs
+      - TARGET_API=http://postgrest:3000/
+    networks:
+      - app-network
+    profiles:
+      - basic
+      - full
+  
+  app_web_admin:
+    container_name: app_web_admin
+    image: app_web_admin:latest
+    build:
+      context: ./cnpj-data-admin
+      dockerfile: ./infrastructure/Dockerfile
+      platforms:
+        - "linux/arm64"
+        # - "linux/amd64"
+    env_file:
+      - ./cnpj-data-admin/.env
+    ports:
+      - 4173:4173
+      - 8080:8080
+    networks:
+      - app-network
+    profiles:
+      - basic
+      - full
 
 networks:
   app-network:
@@ -129,3 +209,8 @@ volumes:
   postgres-data:
   app-output-files:
   app-extracted-files:
+
+
+# docker compose --profile basic up -d --build
+# docker compose up app_getfiles
+# docker compose --profile import-light up

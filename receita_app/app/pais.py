@@ -4,8 +4,10 @@ import time
 import pandas as pd
 
 from app.utils import to_sql, create_connection, filter_files, close_connection, initialize
+from app.get_files import get_file_by_prefix
 
 def run():
+    get_file_by_prefix('PAIS')
     path_extracted_files = os.getenv('EXTRACTED_FILES_PATH')
     filtered_files_pais = filter_files('PAIS')
     engine, conn, cur = create_connection()
