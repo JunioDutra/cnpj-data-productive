@@ -101,7 +101,7 @@ stages:
         repository: '$(repository)'
         command: 'buildAndPush'
         Dockerfile: 'cnpj-data-admin/infrastructure/Dockerfile'
-        buildContext: '$(Pipeline.Workspace)/cnpj-data-admin/'
+        buildContext: '$(Pipeline.Workspace)/s/cnpj-data-admin/'
         tags: |
           $(tag)
           latest
