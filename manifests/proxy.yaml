@@ -23,7 +23,7 @@ spec:
             - name: PGRST_DB_ANON_ROLE
               value: company_data
         - name: api-proxy
-          image: registry.dblsoft.xyz/api_proxy:latest
+          image: registry.dblsoft.xyz/api-proxy:latest
           ports:
             - containerPort: 3001
           env:
