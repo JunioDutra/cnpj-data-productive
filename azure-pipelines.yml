@@ -1,6 +1,11 @@
 trigger:
-- main
-- master
+  branches:
+    include:
+      - main
+      - master
+  paths:
+    include:
+      - cnpj-data-admin/*
 
 pool:
   name: Default

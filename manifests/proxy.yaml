@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: node-app-deployment
+  name: api-proxy-deployment
 spec:
   replicas: 1
   selector:
