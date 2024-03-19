@@ -1,4 +1,4 @@
-FROM node:18-alpine as builder
+FROM --platform=linux/arm64 node:18-alpine as builder
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ COPY yarn.lock .
 # RUN npm install -g yarn
 RUN yarn install
 
-FROM node:18-alpine as runner
+FROM --platform=linux/arm64 node:18-alpine as runner
 
 WORKDIR /app
 
