@@ -112,11 +112,6 @@ stages:
         docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):latest"
       displayName: Docker save
       condition: and(not(canceled()), or(failed(), ne(variables.CACHE_RESTORED, 'true')))
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: '$(Pipeline.Workspace)/s/manifests'
-        artifact: 'manifests'
-        publishLocation: 'pipeline'
 - stage: DeployApp
   displayName: Deploy App
   dependsOn: BuildApp
