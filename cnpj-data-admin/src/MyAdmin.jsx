@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 
-import { Admin, ListGuesser, Resource } from "react-admin";
+import { Admin, ListGuesser, Resource, ShowGuesser } from "react-admin";
 
 import Keycloak from 'keycloak-js';
 import { keycloakAuthProvider, httpClient } from 'ra-keycloak';
 import postgrestRestProvider, { defaultSchema } from '@raphiniert/ra-data-postgrest';
-import { EmpresaList } from './components/empresa.list';
+import { EmpresaList } from './components/empresa/empresa.list';
 import { EstabelecimentoList } from './components/estabelicimento.list';
 import { SocioList } from './components/socios.list';
 import { SimpleList } from './components/simples.list';
 import UserIcon from '@mui/icons-material/People';
+import { EmpresaShow } from './components/empresa/empresa.show';
 
 const config = {
   url: import.meta.env.VITE_OIDC_ENDPOINT,
@@ -65,16 +66,16 @@ const MyAdmin = () => {
       basename="/admin"
       dataProvider={dataProvider.current}
       authProvider={authProvider.current}>
-      <Resource name="empresa" list={EmpresaList} icon={UserIcon} />
-      <Resource name="estabelecimento" list={EstabelecimentoList} />
+      <Resource name="empresa" list={EmpresaList} show={EmpresaShow} icon={UserIcon}  />
+      <Resource name="estabelecimento" list={EstabelecimentoList} show={ShowGuesser} />
       <Resource name="socios" list={SocioList} />
       <Resource name="simples" list={SimpleList} />
       <Resource name="cnae" list={ListGuesser} />
-      <Resource name="natju" list={ListGuesser} />
+      <Resource name="natju" list={ListGuesser} recordRepresentation={(record) => `${record.descricao}`} />
       <Resource name="pais" list={ListGuesser} />
       <Resource name="moti" list={ListGuesser} />
       <Resource name="munic" list={ListGuesser} />
-      <Resource name="quals" list={ListGuesser} />
+      <Resource name="quals" list={ListGuesser} recordRepresentation={(record) => `${record.descricao}`} />
     </Admin>
   );
 }
