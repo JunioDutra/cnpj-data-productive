@@ -33,7 +33,7 @@ spec:
             - name: VITE_OIDC_CLIENT
               value: app
             - name: VITE_API_URL
-              value: http://192.168.2.201
+              value: https://company-api.dblsoft.xyz
 ---
 apiVersion: v1
 kind: Service
