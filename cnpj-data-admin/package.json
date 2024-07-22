@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@raphiniert/ra-data-postgrest": "^2.0.0",
-    "keycloak-js": "^23.0.3",
+    "keycloak-js": "^25.0.2",
     "ra-data-json-server": "^4.16.5",
     "ra-keycloak": "^1.0.1",
     "react": "^18.2.0",
