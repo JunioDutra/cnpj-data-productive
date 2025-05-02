@@ -21,6 +21,7 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=postgres
+      - DOWNLOAD_DATE=2025-04
     networks:
       - app-network
     profiles:
@@ -167,12 +168,15 @@ services:
     build:
       context: ./api_proxy
       dockerfile: Dockerfile
+      platforms:
+        # - "linux/arm64"
+        - "linux/amd64"
     ports:
-      - 3000:3000
+      - 3000:3001
     environment:
       - NODE_ENV=production
-      - ISSUER=http://keycloak:8080/realms/apps
-      - AUDIENCE=app
+      - ISSUER=http://localhost:8000/realms/apps
+      - AUDIENCE=api-data
       - JWK_URI=http://keycloak:8080/realms/apps/protocol/openid-connect/certs
       - TARGET_API=http://postgrest:3000/
     networks:
@@ -188,8 +192,8 @@ services:
       context: ./cnpj-data-admin
       dockerfile: ./infrastructure/Dockerfile
       platforms:
-        - "linux/arm64"
-        # - "linux/amd64"
+        # - "linux/arm64"
+        - "linux/amd64"
     env_file:
       - ./cnpj-data-admin/.env
     ports:

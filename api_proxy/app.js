@@ -12,7 +12,7 @@ const JWKS = jose.createRemoteJWKSet(new URL(JWK_URI));
 
 async function validate_token(jwt) {
     await jose.jwtVerify(jwt, JWKS, {
-        // issuer: ISSUER,
+        issuer: ISSUER,
         audience: AUDIENCE
     })
 
@@ -31,15 +31,19 @@ app.use('/', createProxyMiddleware({
         const auth = req.headers.authorization;
         proxyReq.removeHeader('Authorization');
 
-        // if (auth) {
-        //     try {
-        //         const jwt = auth.split(' ')[1];
-        //         await validate_token(jwt);
-        //     } catch (error) {
-        //         console.log(auth, error);
-        //         res.status(401).send('Unauthorized');
-        //     }
-        // }
+        if (auth) {
+            try {
+                const jwt = auth.split(' ')[1];
+                await validate_token(jwt);
+            } catch (error) {
+                console.log('Token validation error:', error.message);
+                if (!res.headersSent) {
+                    res.status(401).json({ error: 'Unauthorized' });
+                }
+                proxyReq.destroy();
+                return;
+            }
+        }
     },
 }));
 

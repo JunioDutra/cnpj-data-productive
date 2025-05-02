@@ -4,7 +4,9 @@ import wget
 import zipfile
 import requests
 import bs4 as bs
+from datetime import datetime
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 
 import app.utils as utils
 
@@ -21,10 +23,23 @@ def check_diff(url, file_name):
 
     return False
 
+def download_file(url, output_files, file_name):
+    if check_diff(url, file_name):
+        print(f'Arquivo não encontrado ou diferente, baixando... {file_name}')
+        wget.download(url, out=output_files)
+        print(f'Arquivo baixado com sucesso! {file_name}')
+
 def run():
-    dados_rf = 'http://200.152.38.155/CNPJ/'
-    # output_files = os.getenv('OUTPUT_FILES_PATH')
-    # extracted_files = os.getenv('EXTRACTED_FILES_PATH')
+    env_date = os.getenv('DOWNLOAD_DATE')
+
+    current_date = datetime.now()
+    year_month = env_date if env_date else current_date.strftime('%Y-%m')
+    dados_rf = f'https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/{year_month}/'
+
+    print(f'Baixando arquivos do site da Receita Federal da data: {year_month}')
+
+    output_files = os.getenv('OUTPUT_FILES_PATH')
+    extracted_files = os.getenv('EXTRACTED_FILES_PATH')
 
     raw_html = urllib.request.urlopen(dados_rf)
     raw_html = raw_html.read()
@@ -59,40 +74,48 @@ def run():
         i_f += 1
         print(str(i_f) + ' - ' + f)
 
-    # i_l = 0
-    # for l in Files:
-    #     i_l += 1
-    #     print('Baixando arquivo:')
-    #     print(str(i_l) + ' - ' + l)
-    #     url = dados_rf+l
-    #     file_name = os.path.join(output_files, l)
-    #     if check_diff(url, file_name):
-    #         print(f'Arquivo não encontrado ou diferente, baixando... {file_name}')
-    #         wget.download(url, out=output_files)
-    #         print(f'Arquivo baixado com sucesso! {file_name}')
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        # skip_keywords = ['empr', 'estab', 'socio', 'simpl']
+        skip_keywords = []
+        for l in Files:
+            if any(keyword in str.lower(l) for keyword in skip_keywords):
+                print(f'Skipping file: {l}')
+                continue
+            
+            print('Preparando para baixar arquivo:')
+            print(f'- {l}')
+            url = dados_rf + l
+            file_name = os.path.join(output_files, l)
+            futures.append(executor.submit(download_file, url, output_files, file_name))
+        
+        for future in futures:
+            future.result()  # Aguarda a conclusão de cada download
 
-    # Layout = 'https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/consultas/arquivos/NOVOLAYOUTDOSDADOSABERTOSDOCNPJ.pdf'
-    # print('Baixando layout:')
-    # wget.download(Layout, out=output_files)
-    # print('Layout baixado com sucesso!')
-
-    # i_l = 0
-    # for l in Files:
-    #     try:
-    #         i_l += 1
-    #         print('Descompactando arquivo:')
-    #         print(str(i_l) + ' - ' + l)
-    #         full_path = os.path.join(output_files, l)
-    #         with zipfile.ZipFile(full_path, 'r') as zip_ref:
-    #             zip_ref.extractall(extracted_files)
-    #     except:
-    #         pass
+    i_l = 0
+    for l in Files:
+        try:
+            i_l += 1
+            print('Descompactando arquivo:')
+            print(str(i_l) + ' - ' + l)
+            full_path = os.path.join(output_files, l)
+            with zipfile.ZipFile(full_path, 'r') as zip_ref:
+                zip_ref.extractall(extracted_files)
+        except:
+            pass
     
-    # print('Arquivos descompactados com sucesso!')
+    print('Arquivos descompactados com sucesso!')
  
 
 def get_file_by_prefix(prefix):
-    dados_rf = 'http://200.152.38.155/CNPJ/'
+    env_date = os.getenv('DOWNLOAD_DATE')
+
+    current_date = datetime.now()
+    year_month = env_date if env_date else current_date.strftime('%Y-%m')
+    dados_rf = f'https://arquivos.receitafederal.gov.br/dados/cnpj/dados_abertos_cnpj/{year_month}/'
+
+    print(f'Baixando arquivos do site da Receita Federal da data: {year_month}')
+    
     output_files = os.getenv('OUTPUT_FILES_PATH')
     extracted_files = os.getenv('EXTRACTED_FILES_PATH')
     

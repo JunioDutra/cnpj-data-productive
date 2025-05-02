@@ -9,6 +9,7 @@ import { EmpresaList } from './components/empresa/empresa.list';
 import { EstabelecimentoList } from './components/estabelicimento.list';
 import { SocioList } from './components/socios.list';
 import { SimpleList } from './components/simples.list';
+import { KeyValueList } from './components/keyvalue.list';
 import UserIcon from '@mui/icons-material/People';
 import { EmpresaShow } from './components/empresa/empresa.show';
 
@@ -70,12 +71,14 @@ const MyAdmin = () => {
       <Resource name="estabelecimento" list={EstabelecimentoList} show={ShowGuesser} />
       <Resource name="socios" list={SocioList} />
       <Resource name="simples" list={SimpleList} />
-      <Resource name="cnae" list={ListGuesser} />
-      <Resource name="natju" list={ListGuesser} recordRepresentation={(record) => `${record.descricao}`} />
-      <Resource name="pais" list={ListGuesser} />
-      <Resource name="moti" list={ListGuesser} />
-      <Resource name="munic" list={ListGuesser} />
-      <Resource name="quals" list={ListGuesser} recordRepresentation={(record) => `${record.descricao}`} />
+      <Resource name="cnae" list={KeyValueList} />
+      <Resource name="natju" list={KeyValueList} />
+      {/* <Resource name="natju" list={ListGuesser} recordRepresentation={(record) => `${record.descricao}`} /> */}
+      <Resource name="pais" list={KeyValueList} />
+      <Resource name="moti" list={KeyValueList} />
+      <Resource name="munic" list={KeyValueList} />
+      {/* <Resource name="quals" list={ListGuesser} recordRepresentation={(record) => `${record.descricao}`} /> */}
+      <Resource name="quals" list={KeyValueList} />
     </Admin>
   );
 }
