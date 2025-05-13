@@ -27,6 +27,16 @@ services:
     profiles:
       - full
 
+  app_server:
+    <<: *app #run app to start the server
+    container_name: app_server
+    command: python -u -m app.app --server-only
+    ports:
+      - 5000:5000
+    networks:
+      - app-network
+    profiles:
+      - basic
   app_getfiles:
     <<: *app #run app to download and extract files
     container_name: app_getfiles
