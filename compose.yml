@@ -16,6 +16,8 @@ services:
       platforms:
         - "linux/arm64"
         - "linux/amd64"
+    ports:
+      - 8080:8080
     environment:
       - VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/
       - VITE_OIDC_REALM=apps
@@ -39,6 +41,8 @@ services:
       - JWK_URI=http://iam.dblsoft.xyz/realms/apps/protocol/openid-connect/certs
       - TARGET_API=http://postgrest:3000/
       - ENABLE_AUTH=false
+    ports:
+      - 3001:3001
     networks:
       - cnpj-data
 
