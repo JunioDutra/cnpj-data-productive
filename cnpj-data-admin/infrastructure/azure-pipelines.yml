@@ -16,22 +16,18 @@ resources:
 
 variables:
   tag: '$(Build.BuildId)'
-  repositoryPrefix: '192.168.2.185:5000'
+  repositoryPrefix: '192.168.2.177:32768'
   repository: 'app_web_admin'
   repositoryProxy: 'api-proxy'
   projectNamespace: 'cnpj-data'
 
 stages:
-- stage: BuildApp
-  displayName: Build app image
-  jobs: 
-  - job: BuildApp
-    displayName: Build App
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
     steps:
-    - script: |
-        # register QEMU binary - this can be done by running the following image
-        # docker run --privileged --rm tonistiigi/binfmt --install all
-        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
     - task: Cache@2
       displayName: Cache task
       inputs:
@@ -40,7 +36,6 @@ stages:
         cacheHitVar: CACHE_RESTORED
     - script: |
         docker load -i $(Pipeline.Workspace)/docker/cache.tar
-        sed -i "s/latest/$(tag)/g" manifests/app.yaml
       displayName: Docker restore
       condition: and(not(canceled()), eq(variables.CACHE_RESTORED, 'true'))
     - task: Docker@2
@@ -54,7 +49,6 @@ stages:
           $(tag)
           latest
     - script: |
-        echo "eval test"
         mkdir -p $(Pipeline.Workspace)/docker
         docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):$(Build.BuildId)"
         docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):latest"
@@ -65,21 +59,24 @@ stages:
         targetPath: '$(Pipeline.Workspace)/s/manifests'
         artifact: 'manifests'
         publishLocation: 'pipeline'
-- stage: DeployApp
-  displayName: Deploy App
-  dependsOn: BuildApp
+- stage: Deploy
+  displayName: Deploy
+  dependsOn: Build
   jobs:
-  - job: DeployApp
-    displayName: Deploy App
+  - job: Deploy
+    displayName: Deploy
     steps:
     - task: DownloadPipelineArtifact@2
       inputs:
         buildType: 'current'
         artifactName: 'manifests'
         targetPath: '$(Pipeline.Workspace)/manifests'
-    - task: KubernetesManifest@0
+    - task: DockerCompose@1
       inputs:
-        action: 'deploy'
-        kubernetesServiceConnection: 'k3s'
-        namespace: '$(projectNamespace)'
-        manifests: '$(Pipeline.Workspace)/manifests/app.yaml'
+        containerregistrytype: 'Container Registry'
+        dockerRegistryEndpoint: 'docker-service-connection-apps'
+        dockerComposeFile: '$(Pipeline.Workspace)/manifests/compose.yml'
+        projectName: '$(repository)'
+        action: 'Run a Docker Compose command'
+        dockerComposeCommand: 'up'
+        arguments: '-d'
