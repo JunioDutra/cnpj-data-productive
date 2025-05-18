@@ -20,7 +20,7 @@ services:
         - VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/
         - VITE_OIDC_REALM=apps
         - VITE_OIDC_CLIENT=app
-        - VITE_API_URL=http://company-api.dblsoft.xyz
+        - VITE_API_URL=https://company-api.dblsoft.xyz
     ports:
       - 8080:8080
     networks:
