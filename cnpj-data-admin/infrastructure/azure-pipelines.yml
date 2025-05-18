@@ -22,46 +22,46 @@ variables:
   projectNamespace: 'cnpj-data'
 
 stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    steps:
-    - task: Cache@2
-      displayName: Cache task
-      inputs:
-        key: 'docker | "$(Agent.OS)" | cache'
-        path: $(Pipeline.Workspace)/docker
-        cacheHitVar: CACHE_RESTORED
-    - script: |
-        docker load -i $(Pipeline.Workspace)/docker/cache.tar
-      displayName: Docker restore
-      condition: and(not(canceled()), eq(variables.CACHE_RESTORED, 'true'))
-    - task: Docker@2
-      inputs:
-        containerRegistry: 'docker-service-connection'
-        repository: '$(repository)'
-        command: 'buildAndPush'
-        Dockerfile: 'cnpj-data-admin/infrastructure/Dockerfile'
-        buildContext: '$(Pipeline.Workspace)/s/cnpj-data-admin/'
-        tags: |
-          $(tag)
-          latest
-    - script: |
-        mkdir -p $(Pipeline.Workspace)/docker
-        docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):$(Build.BuildId)"
-        docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):latest"
-      displayName: Docker save
-      condition: and(not(canceled()), or(failed(), ne(variables.CACHE_RESTORED, 'true')))
-    - task: PublishPipelineArtifact@1
-      inputs:
-        targetPath: '$(Pipeline.Workspace)/s/manifests'
-        artifact: 'manifests'
-        publishLocation: 'pipeline'
-- stage: Deploy
-  displayName: Deploy
-  dependsOn: Build
+# - stage: Build
+#   displayName: Build image
+#   jobs:
+#   - job: Build
+#     displayName: Build
+#     steps:
+#     - task: Cache@2
+#       displayName: Cache task
+#       inputs:
+#         key: 'docker | "$(Agent.OS)" | cache'
+#         path: $(Pipeline.Workspace)/docker
+#         cacheHitVar: CACHE_RESTORED
+#     - script: |
+#         docker load -i $(Pipeline.Workspace)/docker/cache.tar
+#       displayName: Docker restore
+#       condition: and(not(canceled()), eq(variables.CACHE_RESTORED, 'true'))
+#     - task: Docker@2
+#       inputs:
+#         containerRegistry: 'docker-service-connection'
+#         repository: '$(repository)'
+#         command: 'buildAndPush'
+#         Dockerfile: 'cnpj-data-admin/infrastructure/Dockerfile'
+#         buildContext: '$(Pipeline.Workspace)/s/cnpj-data-admin/'
+#         tags: |
+#           $(tag)
+#           latest
+#     - script: |
+#         mkdir -p $(Pipeline.Workspace)/docker
+#         docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):$(Build.BuildId)"
+#         docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):latest"
+#       displayName: Docker save
+#       condition: and(not(canceled()), or(failed(), ne(variables.CACHE_RESTORED, 'true')))
+#     - task: PublishPipelineArtifact@1
+#       inputs:
+#         targetPath: '$(Pipeline.Workspace)/s/manifests'
+#         artifact: 'manifests'
+#         publishLocation: 'pipeline'
+- stage: Build and Deploy
+  displayName: Build and Deploy
+  # dependsOn: Build
   jobs:
   - job: Deploy
     displayName: Deploy
@@ -78,5 +78,5 @@ stages:
         dockerComposeFile: '$(Pipeline.Workspace)/manifests/compose.yml'
         projectName: '$(repository)'
         action: 'Run a Docker Compose command'
-        dockerComposeCommand: 'up'
+        dockerComposeCommand: 'up --build'
         arguments: '-d'

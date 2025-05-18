@@ -9,7 +9,7 @@ services:
       - cnpj-data
   api_proxy:
     container_name: api_proxy
-    # image: api_proxy:latest
+    image: api_proxy:latest
     build:
       context: ../api_proxy
       dockerfile: Dockerfile
@@ -27,7 +27,7 @@ services:
       - cnpj-data
   app_web_admin:
     container_name: app_web_admin
-    # image: app_web_admin:latest
+    image: app_web_admin:latest
     build:
       context: ./cnpj-data-admin
       dockerfile: ./infrastructure/Dockerfile
