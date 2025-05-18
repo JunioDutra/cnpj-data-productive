@@ -3,10 +3,10 @@ trigger:
     include:
       - main
       - master
-  paths:
-    include:
-      - cnpj-data-admin/*
-      - manifests/*
+  # paths:
+  #   include:
+  #     - cnpj-data-admin/*
+  #     - manifests/*
 
 pool:
   name: Default
