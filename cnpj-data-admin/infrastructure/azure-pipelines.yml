@@ -71,6 +71,9 @@ stages:
     #     buildType: 'current'
     #     artifactName: 'manifests'
     #     targetPath: '$(Pipeline.Workspace)/manifests'
+    - script: |
+        ls -laR ./
+      displayName: log
     - task: DockerCompose@1
       inputs:
         containerregistrytype: 'Container Registry'
