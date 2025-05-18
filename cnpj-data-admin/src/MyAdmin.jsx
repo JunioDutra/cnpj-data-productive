@@ -19,6 +19,8 @@ const config = {
   clientId: import.meta.env.VITE_OIDC_CLIENT,
 };
 
+console.log('Keycloak config', config);
+
 const MyAdmin = () => {
   const [keycloak, setKeycloak] = useState();
   const authProvider = useRef();
