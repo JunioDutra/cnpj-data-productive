@@ -1,4 +1,4 @@
-FROM node:18-alpine as installer
+FROM node:23-alpine AS installer
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ COPY yarn.lock .
 
 RUN npm install
 
-FROM node:18-alpine as builder
+FROM node:23-alpine AS builder
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ COPY . .
 
 RUN npm run build
 
-FROM node:18-alpine as runner
+FROM node:23-alpine AS runner
 
 WORKDIR /app
 
