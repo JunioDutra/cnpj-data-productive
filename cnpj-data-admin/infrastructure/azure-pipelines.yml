@@ -59,7 +59,7 @@ stages:
 #         targetPath: '$(Pipeline.Workspace)/s/manifests'
 #         artifact: 'manifests'
 #         publishLocation: 'pipeline'
-- stage: Build and Deploy
+- stage: Build_And_Deploy
   displayName: Build and Deploy
   # dependsOn: Build
   jobs:
