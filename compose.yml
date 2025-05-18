@@ -16,13 +16,13 @@ services:
       platforms:
         - "linux/arm64"
         - "linux/amd64"
+      args:
+        - VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/
+        - VITE_OIDC_REALM=apps
+        - VITE_OIDC_CLIENT=app
+        - VITE_API_URL=http://company-api.dblsoft.xyz
     ports:
       - 8080:8080
-    environment:
-      - VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/
-      - VITE_OIDC_REALM=apps
-      - VITE_OIDC_CLIENT=app
-      - VITE_API_URL=http://company-api.dblsoft.xyz
     networks:
       - cnpj-data
   api_proxy:

@@ -9,6 +9,11 @@ RUN npm install
 
 FROM node:23-alpine AS builder
 
+ARG VITE_OIDC_ENDPOINT
+ARG VITE_OIDC_REALM
+ARG VITE_OIDC_CLIENT
+ARG VITE_API_URL
+
 WORKDIR /app
 
 COPY --from=installer /app /app
