@@ -66,11 +66,11 @@ stages:
   - job: Deploy
     displayName: Deploy
     steps:
-    - task: DownloadPipelineArtifact@2
-      inputs:
-        buildType: 'current'
-        artifactName: 'manifests'
-        targetPath: '$(Pipeline.Workspace)/manifests'
+    # - task: DownloadPipelineArtifact@2
+    #   inputs:
+    #     buildType: 'current'
+    #     artifactName: 'manifests'
+    #     targetPath: '$(Pipeline.Workspace)/manifests'
     - task: DockerCompose@1
       inputs:
         containerregistrytype: 'Container Registry'
