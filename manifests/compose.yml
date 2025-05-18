@@ -7,11 +7,27 @@ services:
       - PGRST_DB_ANON_ROLE=postgres
     networks:
       - cnpj-data
+  app_web_admin:
+    container_name: app_web_admin
+    image: app_web_admin:latest
+    build:
+      context: cnpj-data-admin
+      dockerfile: ./infrastructure/Dockerfile
+      platforms:
+        - "linux/arm64"
+        - "linux/amd64"
+    environment:
+      - VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/
+      - VITE_OIDC_REALM=apps
+      - VITE_OIDC_CLIENT=app
+      - VITE_API_URL=http://company-api.dblsoft.xyz
+    networks:
+      - cnpj-data
   api_proxy:
     container_name: api_proxy
     image: api_proxy:latest
     build:
-      context: ./api_proxy
+      context: api_proxy
       dockerfile: Dockerfile
       platforms:
         - "linux/arm64"
@@ -23,22 +39,6 @@ services:
       - JWK_URI=http://iam.dblsoft.xyz/realms/apps/protocol/openid-connect/certs
       - TARGET_API=http://postgrest:3000/
       - ENABLE_AUTH=false
-    networks:
-      - cnpj-data
-  app_web_admin:
-    container_name: app_web_admin
-    image: app_web_admin:latest
-    build:
-      context: ./cnpj-data-admin
-      dockerfile: ./infrastructure/Dockerfile
-      platforms:
-        - "linux/arm64"
-        - "linux/amd64"
-    environment:
-      - VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/
-      - VITE_OIDC_REALM=apps
-      - VITE_OIDC_CLIENT=app
-      - VITE_API_URL=http://company-api.dblsoft.xyz
     networks:
       - cnpj-data
 
