@@ -72,7 +72,11 @@ stages:
     #     artifactName: 'manifests'
     #     targetPath: '$(Pipeline.Workspace)/manifests'
     - script: |
-        ls -laR ./
+        pwd
+        ls -la
+        ls -la ../
+        echo $(Pipeline.Workspace)
+        ls -la $(Pipeline.Workspace)
       displayName: log
     - task: DockerCompose@1
       inputs:
