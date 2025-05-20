@@ -1,7 +1,7 @@
-import { Datagrid, List, NumberField, TextField, TextInput } from 'react-admin';
+import { Datagrid, List, NumberField, TextField, TextInput, NumberInput } from 'react-admin';
 
 export const EmpresaList = () => (
-    <List filters={[<TextInput label="Search" source="cnpj_basico" alwaysOn />, <NumberField label="Natureza Jurídica" source="natureza_juridica" alwaysOn />]}>
+    <List filters={[<TextInput label="Search" source="cnpj_basico" alwaysOn />, <NumberInput label="Natureza Jurídica" source="natureza_juridica" alwaysOn />]}>
         <Datagrid rowClick="show">
             <TextField source="id" />
             <TextField source="cnpj_basico" />
