@@ -2,6 +2,7 @@ services:
   postgrest:
     container_name: postgrest
     image: postgrest/postgrest
+    restart: unless-stopped
     environment:
       - PGRST_DB_URI=postgres://postgres:postgres@db.dblsoft.lan:15432/cnpj_data
       - PGRST_DB_ANON_ROLE=postgres
@@ -10,6 +11,7 @@ services:
   app_web_admin:
     container_name: app_web_admin
     image: app_web_admin:latest
+    restart: unless-stopped
     build:
       context: ../s/cnpj-data-admin
       dockerfile: ./infrastructure/Dockerfile
@@ -28,6 +30,7 @@ services:
   api_proxy:
     container_name: api_proxy
     image: api_proxy:latest
+    restart: unless-stopped
     build:
       context: ../s/api_proxy
       dockerfile: Dockerfile
