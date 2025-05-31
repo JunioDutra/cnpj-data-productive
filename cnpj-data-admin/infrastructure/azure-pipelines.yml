@@ -19,6 +19,7 @@ variables:
   AWS_ACCESS_KEY_ID: '$(MINIO_ACCESS_KEY)'
   AWS_SECRET_ACCESS_KEY: '$(MINIO_SECRET_KEY)'
   AWS_ENDPOINT_URL: '$(MINIO_ENDPOINT_URL)'
+  MINIO_S3_BUCKET_NAME: '$(MINIO_S3_BUCKET_NAME)'
 
 stages:
 - stage: Build_And_Deploy
@@ -31,34 +32,45 @@ stages:
         # Ensure we're in the correct directory
         cd $(Pipeline.Workspace)/s
         
-        # Debug: List current directory contents
-        echo "Contents of workspace root:"
-        ls -la
-        echo "Contents of cnpj-data-admin:"
-        ls -la cnpj-data-admin/
+        # Debug: Show current working directory and verify paths
+        echo "Current working directory: $(pwd)"
+        echo "Checking if cnpj-data-admin exists:"
+        ls -la cnpj-data-admin/package.json
         
         # Create dist directory
         mkdir -p cnpj-data-admin/dist
         
+        # Get absolute path for Docker volume mounting
+        ADMIN_PATH=$(pwd)/cnpj-data-admin
+        echo "Using path for Docker mount: $ADMIN_PATH"
+        
         # Build using Node.js Docker image with volume mapping and environment variables
         docker run --rm \
-          -v $(pwd)/cnpj-data-admin:/app \
+          -v "$ADMIN_PATH":/app \
           -w /app \
           -e VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/ \
           -e VITE_OIDC_REALM=apps \
           -e VITE_OIDC_CLIENT=app \
           -e VITE_API_URL=https://company-api.dblsoft.xyz \
           node:18-alpine \
-          sh -c "echo 'Contents of /app:' && ls -la /app && echo 'Running npm install...' && npm install && echo 'Running npm run build...' && npm run build"
+          sh -c "echo 'Contents of /app:' && ls -la /app && echo 'Checking package.json:' && cat /app/package.json | head -10 && echo 'Running npm install...' && npm install && echo 'Running npm run build...' && npm run build"
       displayName: 'Build React App with Docker'
     
     - script: |
         # Ensure we're in the correct directory
         cd $(Pipeline.Workspace)/s
         
+        # Get absolute path for Docker volume mounting
+        DIST_PATH=$(pwd)/cnpj-data-admin/dist
+        echo "Using dist path for Docker mount: $DIST_PATH"
+        
+        # Check if dist directory exists and has content
+        echo "Contents of dist directory:"
+        ls -la cnpj-data-admin/dist/
+        
         # Deploy to MinIO S3 using AWS CLI Docker image
         docker run --rm \
-          -v $(pwd)/cnpj-data-admin/dist:/dist \
+          -v "$DIST_PATH":/dist \
           -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
           -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
           -e AWS_DEFAULT_REGION="us-east-1" \
@@ -72,7 +84,7 @@ stages:
         
         # Upload HTML and JSON files with no-cache
         docker run --rm \
-          -v $(pwd)/cnpj-data-admin/dist:/dist \
+          -v "$DIST_PATH":/dist \
           -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
           -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
           -e AWS_DEFAULT_REGION="us-east-1" \
