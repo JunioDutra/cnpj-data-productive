@@ -41,7 +41,7 @@ stages:
           -e VITE_OIDC_CLIENT=app \
           -e VITE_API_URL=https://company-api.dblsoft.xyz \
           node:18-alpine \
-          sh -c "npm ci && npm run build"
+          sh -c "npm install && npm run build"
       displayName: 'Build React App with Docker'
     
     - script: |
