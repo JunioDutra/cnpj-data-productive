@@ -3,10 +3,6 @@ trigger:
     include:
       - main
       - master
-  # paths:
-  #   include:
-  #     - cnpj-data-admin/*
-  #     - manifests/*
 
 pool:
   name: Default
@@ -20,64 +16,63 @@ variables:
   repository: 'app_web_admin'
   repositoryProxy: 'api-proxy'
   projectNamespace: 'cnpj-data'
+  AWS_ACCESS_KEY_ID: '$(MINIO_ACCESS_KEY)'
+  AWS_SECRET_ACCESS_KEY: '$(MINIO_SECRET_KEY)'
+  AWS_ENDPOINT_URL: '$(MINIO_ENDPOINT_URL)'
+  S3_BUCKET_NAME: '$(S3_BUCKET_NAME)'
 
 stages:
-# - stage: Build
-#   displayName: Build image
-#   jobs:
-#   - job: Build
-#     displayName: Build
-#     steps:
-#     - task: Cache@2
-#       displayName: Cache task
-#       inputs:
-#         key: 'docker | "$(Agent.OS)" | cache'
-#         path: $(Pipeline.Workspace)/docker
-#         cacheHitVar: CACHE_RESTORED
-#     - script: |
-#         docker load -i $(Pipeline.Workspace)/docker/cache.tar
-#       displayName: Docker restore
-#       condition: and(not(canceled()), eq(variables.CACHE_RESTORED, 'true'))
-#     - task: Docker@2
-#       inputs:
-#         containerRegistry: 'docker-service-connection'
-#         repository: '$(repository)'
-#         command: 'buildAndPush'
-#         Dockerfile: 'cnpj-data-admin/infrastructure/Dockerfile'
-#         buildContext: '$(Pipeline.Workspace)/s/cnpj-data-admin/'
-#         tags: |
-#           $(tag)
-#           latest
-#     - script: |
-#         mkdir -p $(Pipeline.Workspace)/docker
-#         docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):$(Build.BuildId)"
-#         docker save -o $(Pipeline.Workspace)/docker/cache.tar "$(repositoryPrefix)/$(repository):latest"
-#       displayName: Docker save
-#       condition: and(not(canceled()), or(failed(), ne(variables.CACHE_RESTORED, 'true')))
-#     - task: PublishPipelineArtifact@1
-#       inputs:
-#         targetPath: '$(Pipeline.Workspace)/s/manifests'
-#         artifact: 'manifests'
-#         publishLocation: 'pipeline'
 - stage: Build_And_Deploy
   displayName: Build and Deploy
-  # dependsOn: Build
   jobs:
-  - job: Deploy
-    displayName: Deploy
+  - job: BuildAndDeploy
+    displayName: Build React App and Deploy to MinIO S3
     steps:
-    # - task: DownloadPipelineArtifact@2
-    #   inputs:
-    #     buildType: 'current'
-    #     artifactName: 'manifests'
-    #     targetPath: '$(Pipeline.Workspace)/manifests'
     - script: |
-        pwd
-        ls -la
-        ls -la ../
-        echo $(Pipeline.Workspace)
-        ls -la $(Pipeline.Workspace)
-      displayName: log
+        # Create dist directory
+        mkdir -p $(Pipeline.Workspace)/s/cnpj-data-admin/dist
+        
+        # Build using Node.js Docker image with volume mapping and environment variables
+        docker run --rm \
+          -v $(Pipeline.Workspace)/s/cnpj-data-admin:/app \
+          -w /app \
+          -e VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/ \
+          -e VITE_OIDC_REALM=apps \
+          -e VITE_OIDC_CLIENT=app \
+          -e VITE_API_URL=https://company-api.dblsoft.xyz \
+          node:18-alpine \
+          sh -c "npm ci && npm run build"
+      displayName: 'Build React App with Docker'
+    
+    - script: |
+        # Deploy to MinIO S3 using AWS CLI Docker image
+        docker run --rm \
+          -v $(Pipeline.Workspace)/s/cnpj-data-admin/dist:/dist \
+          -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
+          -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
+          -e AWS_DEFAULT_REGION="us-east-1" \
+          amazon/aws-cli:latest \
+          s3 sync /dist s3://$(S3_BUCKET_NAME)/ \
+            --endpoint-url $(AWS_ENDPOINT_URL) \
+            --delete \
+            --cache-control "public, max-age=31536000" \
+            --exclude "*.html" \
+            --exclude "*.json"
+        
+        # Upload HTML and JSON files with no-cache
+        docker run --rm \
+          -v $(Pipeline.Workspace)/s/cnpj-data-admin/dist:/dist \
+          -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
+          -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
+          -e AWS_DEFAULT_REGION="us-east-1" \
+          amazon/aws-cli:latest \
+          s3 sync /dist s3://$(S3_BUCKET_NAME)/ \
+            --endpoint-url $(AWS_ENDPOINT_URL) \
+            --include "*.html" \
+            --include "*.json" \
+            --cache-control "no-cache, no-store, must-revalidate"
+      displayName: 'Deploy to MinIO S3'
+
     - task: DockerCompose@1
       inputs:
         containerregistrytype: 'Container Registry'
