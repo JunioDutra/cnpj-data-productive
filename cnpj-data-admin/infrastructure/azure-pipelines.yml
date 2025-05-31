@@ -19,7 +19,6 @@ variables:
   AWS_ACCESS_KEY_ID: '$(MINIO_ACCESS_KEY)'
   AWS_SECRET_ACCESS_KEY: '$(MINIO_SECRET_KEY)'
   AWS_ENDPOINT_URL: '$(MINIO_ENDPOINT_URL)'
-  S3_BUCKET_NAME: '$(S3_BUCKET_NAME)'
 
 stages:
 - stage: Build_And_Deploy
@@ -29,6 +28,10 @@ stages:
     displayName: Build React App and Deploy to MinIO S3
     steps:
     - script: |
+        # Debug: List current directory contents
+        ls -la $(Pipeline.Workspace)/s/
+        ls -la $(Pipeline.Workspace)/s/cnpj-data-admin/
+        
         # Create dist directory
         mkdir -p $(Pipeline.Workspace)/s/cnpj-data-admin/dist
         
@@ -41,7 +44,7 @@ stages:
           -e VITE_OIDC_CLIENT=app \
           -e VITE_API_URL=https://company-api.dblsoft.xyz \
           node:18-alpine \
-          sh -c "npm install && npm run build"
+          sh -c "ls -la /app && npm install && npm run build"
       displayName: 'Build React App with Docker'
     
     - script: |
@@ -52,7 +55,7 @@ stages:
           -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
           -e AWS_DEFAULT_REGION="us-east-1" \
           amazon/aws-cli:latest \
-          s3 sync /dist s3://$(S3_BUCKET_NAME)/ \
+          s3 sync /dist s3://$(MINIO_S3_BUCKET_NAME)/ \
             --endpoint-url $(AWS_ENDPOINT_URL) \
             --delete \
             --cache-control "public, max-age=31536000" \
@@ -66,7 +69,7 @@ stages:
           -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
           -e AWS_DEFAULT_REGION="us-east-1" \
           amazon/aws-cli:latest \
-          s3 sync /dist s3://$(S3_BUCKET_NAME)/ \
+          s3 sync /dist s3://$(MINIO_S3_BUCKET_NAME)/ \
             --endpoint-url $(AWS_ENDPOINT_URL) \
             --include "*.html" \
             --include "*.json" \
