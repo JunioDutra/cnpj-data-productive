@@ -28,29 +28,37 @@ stages:
     displayName: Build React App and Deploy to MinIO S3
     steps:
     - script: |
+        # Ensure we're in the correct directory
+        cd $(Pipeline.Workspace)/s
+        
         # Debug: List current directory contents
-        ls -la $(Pipeline.Workspace)/s/
-        ls -la $(Pipeline.Workspace)/s/cnpj-data-admin/
+        echo "Contents of workspace root:"
+        ls -la
+        echo "Contents of cnpj-data-admin:"
+        ls -la cnpj-data-admin/
         
         # Create dist directory
-        mkdir -p $(Pipeline.Workspace)/s/cnpj-data-admin/dist
+        mkdir -p cnpj-data-admin/dist
         
         # Build using Node.js Docker image with volume mapping and environment variables
         docker run --rm \
-          -v $(Pipeline.Workspace)/s/cnpj-data-admin:/app \
+          -v $(pwd)/cnpj-data-admin:/app \
           -w /app \
           -e VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/ \
           -e VITE_OIDC_REALM=apps \
           -e VITE_OIDC_CLIENT=app \
           -e VITE_API_URL=https://company-api.dblsoft.xyz \
           node:18-alpine \
-          sh -c "ls -la /app && npm install && npm run build"
+          sh -c "echo 'Contents of /app:' && ls -la /app && echo 'Running npm install...' && npm install && echo 'Running npm run build...' && npm run build"
       displayName: 'Build React App with Docker'
     
     - script: |
+        # Ensure we're in the correct directory
+        cd $(Pipeline.Workspace)/s
+        
         # Deploy to MinIO S3 using AWS CLI Docker image
         docker run --rm \
-          -v $(Pipeline.Workspace)/s/cnpj-data-admin/dist:/dist \
+          -v $(pwd)/cnpj-data-admin/dist:/dist \
           -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
           -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
           -e AWS_DEFAULT_REGION="us-east-1" \
@@ -64,7 +72,7 @@ stages:
         
         # Upload HTML and JSON files with no-cache
         docker run --rm \
-          -v $(Pipeline.Workspace)/s/cnpj-data-admin/dist:/dist \
+          -v $(pwd)/cnpj-data-admin/dist:/dist \
           -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)" \
           -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
           -e AWS_DEFAULT_REGION="us-east-1" \
