@@ -39,26 +39,17 @@ stages:
         echo "Checking package.json content:"
         head -5 package.json
         
-        # Build directly without Docker volume mounting - use bind mount with specific options
+        # Build using Docker with explicit bind mount
         docker run --rm \
-          -v "$(pwd)":/workspace \
+          --mount type=bind,source="$(pwd)",target=/workspace \
           -w /workspace \
           -e VITE_OIDC_ENDPOINT=https://iam.dblsoft.xyz/ \
           -e VITE_OIDC_REALM=apps \
           -e VITE_OIDC_CLIENT=app \
           -e VITE_API_URL=https://company-api.dblsoft.xyz \
           node:18-alpine \
-          sh -c "
-            echo 'Contents of workspace:' && 
-            ls -la && 
-            echo 'Installing dependencies...' && 
-            npm ci --only=production --no-audit && 
-            echo 'Building application...' && 
-            npm run build &&
-            echo 'Build completed. Contents of dist:' &&
-            ls -la dist/
-          "
-      displayName: 'Build React App with Docker'
+          sh -c "echo 'Contents of /workspace:' && ls -la /workspace && echo 'Checking package.json:' && cat /workspace/package.json | head -10 && echo 'Installing dependencies...' && npm ci --only=production --no-audit && echo 'Building application...' && npm run build && echo 'Build completed. Contents of dist:' && ls -la dist/"
+      displayName: 'Build React App with Docker (bind mount)'
     
     - script: |
         # Ensure we're in the correct directory
