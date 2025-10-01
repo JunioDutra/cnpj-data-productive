@@ -3,10 +3,10 @@ import app.empresa as empresa
 import app.estabelecimentos as estabelecimentos
 import app.socios as socios
 import app.simples as simples
-import app.cnae as cnae
+import app.services.cnae_service as cnae_service
 import app.moti as moti
 import app.munic as munic
-import app.natju as natju
+import app.services.natju_service as natju_service
 import app.pais as pais
 import app.quals as quals
 
@@ -20,10 +20,10 @@ def run():
     estabelecimentos.run()
     socios.run()
     simples.run()
-    cnae.run()
+    cnae_service.run()
     moti.run()
     munic.run()
-    natju.run()
+    natju_service.run()
     pais.run()
     quals.run()
 

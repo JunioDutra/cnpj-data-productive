@@ -21,11 +21,18 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=postgres
-      - DOWNLOAD_DATE=2025-04
+      - DOWNLOAD_DATE=2025-05
     networks:
       - app-network
     profiles:
       - full
+
+  app_api:
+    <<: *app #run app to download and extract files
+    container_name: app_api
+    command: python -u -m app.api
+    ports:
+      - 5000:5000
 
   app_getfiles:
     <<: *app #run app to download and extract files
@@ -123,8 +130,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./receita_app/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - app-network
     profiles:
